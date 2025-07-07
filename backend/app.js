@@ -19,7 +19,7 @@ const getInventory = async (req, res) => {
 
         result.forEach(element => {
             element['market_price']['currency'] = 'CNY';
-            element['market_price']['plain_lowest_price'] = String(element['market_price']['lowest_price']).replace('¥ ', '') * 1;
+            element['market_price']['numeric_price'] = String(element['market_price']['lowest_price']).replace('¥ ', '') * 1;
             element['buy_price'] = 0;
         })
 
@@ -37,10 +37,25 @@ const getOverview = async (req, res) => {
         const cursor = await collection.find().sort({ batch_id: -1 }).limit(1);
         const maxBatchDoc = await cursor.next();
         const maxBatchId = maxBatchDoc.batch_id;
-        // 获取所有 batch_id 等于 maximumBatchId 的集合，并计算总的 lowest_price
-        const result = await collection.find({ batch_id: maxBatchId }).toArray();
+        // 获取所有 batch_id 等于 maximumBatchId 的集合，计算总的 lowest_price 价值并赋值给 numeric_price
+        const result = await collection.aggregate([
+            { $match: { batch_id: maxBatchId } },
+            {
+                $addFields: {
+                    numeric_price: {
+                        $toDouble: {
+                            $trim: {
+                                input: { $replaceAll: { input: '$market_price.lowest_price', find: '¥', replacement: ''} }
+                            }
+                        }
+                    }
+                }
+            },
 
-        res.status(200).json(result);
+            { $group: { _id: null, total_lowest_price: { $sum: '$numeric_price' }, count: { $sum: 1 } } }
+        ]).toArray();
+
+        res.status(200).json(result[0]);
     } catch (err) {
         console.log(err);
     }
