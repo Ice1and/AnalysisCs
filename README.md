@@ -6,6 +6,7 @@ use AnalysisCs for:
 
 ### Todo List
 AnalysisCs is continuously evolving! Here's what's coming:
+- **Short-term forecast:**
+- **Multiple data sources:** Add prices for multiple platforms
 - **IP Proxy Pool:**
 - **Cookie Pool:**
-- **Multiple data sources:** Add price benchmarks for multiple platforms
